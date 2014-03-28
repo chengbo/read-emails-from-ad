@@ -1,15 +1,62 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ReadEmailsFromAD
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
+            try
+            {
+                Console.WriteLine("Read mail groups from AD...");
+                var allMailGroups = GetAllMailGroupsFromAd();
+                Console.WriteLine("Total mail group count is: " + allMailGroups.Count);
+                if (allMailGroups.Count == 0)
+                {
+                    Console.WriteLine("ADMailGroup is empty. Nothing to do.");
+                    Console.WriteLine("END");
+                    return;
+                }
+
+                Console.WriteLine("Read Members from all groups...");
+
+                var members = new List<Member>();
+
+                foreach (var mailGroup in allMailGroups)
+                {
+                    members.AddRange(BuildGroupMembers(mailGroup));
+                }
+
+                Console.WriteLine("Total mail group count is: " + allMailGroups.Count);
+                Console.WriteLine("Total member result count is: " + members.Count);
+
+                Console.WriteLine("Begin write to redis");
+                WriteToRedis(members);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+        private static void WriteToRedis(List<Member> members)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static List<Member> BuildGroupMembers(MailGroup mailGroup)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static List<MailGroup> GetAllMailGroupsFromAd()
+        {
+            throw new NotImplementedException();
         }
     }
 }
