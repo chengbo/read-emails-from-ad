@@ -30,7 +30,7 @@ namespace ReadEmailsFromAD
 
                 foreach (var mailGroup in allMailGroups)
                 {
-                    members.AddRange(BuildGroupMembers(mailGroup));
+                    members.AddRange(activeDirectory.BuildGroupMembers(mailGroup));
                 }
 
                 Console.WriteLine("Total mail group count is: " + allMailGroups.Count);
@@ -46,11 +46,6 @@ namespace ReadEmailsFromAD
         }
 
         private static void WriteToRedis(List<Member> members)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static List<Member> BuildGroupMembers(MailGroup mailGroup)
         {
             throw new NotImplementedException();
         }

@@ -44,6 +44,11 @@ namespace ReadEmailsFromAD
             return resultTable;
         }
 
+        public List<Member> BuildGroupMembers(MailGroup mailGroup)
+        {
+            throw new NotImplementedException();
+        }
+
         private SearchResultCollection FindAll(string filter, string[] propertiesToLoad)
         {
             DirectorySearcher searcher = null;
