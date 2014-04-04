@@ -13,8 +13,9 @@ namespace ReadEmailsFromAD
         {
             try
             {
+                var activeDirectory = new ActiveDirectory();
                 Console.WriteLine("Read mail groups from AD...");
-                var allMailGroups = GetAllMailGroupsFromAd();
+                var allMailGroups = activeDirectory.GetAllMailGroups();
                 Console.WriteLine("Total mail group count is: " + allMailGroups.Count);
                 if (allMailGroups.Count == 0)
                 {
@@ -50,11 +51,6 @@ namespace ReadEmailsFromAD
         }
 
         private static List<Member> BuildGroupMembers(MailGroup mailGroup)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static List<MailGroup> GetAllMailGroupsFromAd()
         {
             throw new NotImplementedException();
         }
