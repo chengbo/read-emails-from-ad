@@ -26,11 +26,13 @@ namespace ReadEmailsFromAD
 
                 Console.WriteLine("Read Members from all groups...");
 
-                var members = new List<Member>();
+                var members = new Dictionary<string, List<Member>>();
 
                 foreach (var mailGroup in allMailGroups)
                 {
-                    members.AddRange(activeDirectory.BuildGroupMembers(mailGroup));
+                    members[mailGroup.AliasName] = activeDirectory.BuildGroupMembers(mailGroup.Name);
+                    members[mailGroup.DisplayName] = activeDirectory.BuildGroupMembers(mailGroup.Name);
+                    members[mailGroup.EmailAddress] = activeDirectory.BuildGroupMembers(mailGroup.Name);
                 }
 
                 Console.WriteLine("Total mail group count is: " + allMailGroups.Count);
@@ -45,7 +47,7 @@ namespace ReadEmailsFromAD
             }
         }
 
-        private static void WriteToRedis(List<Member> members)
+        private static void WriteToRedis(Dictionary<string, List<Member>> members)
         {
             throw new NotImplementedException();
         }

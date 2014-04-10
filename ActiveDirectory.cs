@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.DirectoryServices;
+using System.Runtime.InteropServices;
 
 namespace ReadEmailsFromAD
 {
@@ -44,9 +45,97 @@ namespace ReadEmailsFromAD
             return resultTable;
         }
 
-        public List<Member> BuildGroupMembers(MailGroup mailGroup)
+        public List<Member> BuildGroupMembers(string groupName)
         {
-            throw new NotImplementedException();
+            string filter =
+                String.Format(
+                    "(&(objectClass=Group)(objectCategory=Group)(|(msExchHideFromAddressLists=FALSE)(!(msExchHideFromAddressLists=*)))(name={0}))",
+                    groupName);
+
+            var results = FindOne(filter, new[] { "member" });
+
+            if (results == null)
+            {
+                return new List<Member>();
+            }
+
+            var resultTable = new List<Member>();
+
+            DirectoryEntry directoryEntry = null;
+            DirectorySearcher groupSearcher = null;
+
+            foreach (string strProp in results.Properties["member"])
+            {
+                string path = strProp;
+                try
+                {
+                    if (directoryEntry == null)
+                    {
+                        directoryEntry = new DirectoryEntry
+                        {
+                            AuthenticationType = AuthenticationTypes.FastBind
+                        };
+                    }
+                    directoryEntry.Path = @"LDAP://" + path;
+                    directoryEntry.RefreshCache();
+
+                    if (groupSearcher == null)
+                    {
+                        groupSearcher = new DirectorySearcher(directoryEntry)
+                        {
+                            SearchScope = SearchScope.Base,
+                            Filter = "(|(objectClass=group)(objectClass=user))"
+                        };
+                        groupSearcher.PropertiesToLoad.AddRange(new[] { "displayname", "mail", "mailnickname", "name", "objectClass" });
+                    }
+
+                    SearchResult searchResult = groupSearcher.FindOne();
+
+                    if (searchResult == null)
+                    {
+                        continue;
+                    }
+
+                    var objectClassPropertyCollection = searchResult.Properties["objectClass"];
+                    if (objectClassPropertyCollection == null)
+                    {
+                        continue;
+                    }
+
+                    if (objectClassPropertyCollection.Contains("user"))
+                    {
+                        var member = new Member
+                        {
+                            DisplayName = GetValue(searchResult, "displayname"),
+                            EmailAddress = GetValue(searchResult, "mail"),
+                            UserID = GetValue(searchResult, "mailnickname")
+                        };
+                        resultTable.Add(member);
+                    }
+                    else if (objectClassPropertyCollection.Contains("group"))
+                    {
+                        var members = BuildGroupMembers(GetValue(searchResult, "name"));
+                        foreach (var m in members)
+                        {
+                            resultTable.Add(m);
+                        }
+                    }
+                }
+                catch (COMException)
+                {
+                }
+            }
+
+            if (groupSearcher != null)
+            {
+                groupSearcher.Dispose();
+            }
+
+            if (directoryEntry != null)
+            {
+                directoryEntry.Close();
+            }
+            return resultTable;
         }
 
         private SearchResultCollection FindAll(string filter, string[] propertiesToLoad)
@@ -56,6 +145,27 @@ namespace ReadEmailsFromAD
             {
                 searcher = CreateSearcher(filter, propertiesToLoad);
                 return searcher.FindAll();
+            }
+            finally
+            {
+                if (searcher != null)
+                {
+                    if (searcher.SearchRoot != null)
+                    {
+                        searcher.SearchRoot.Dispose();
+                    }
+                    searcher.Dispose();
+                }
+            }
+        }
+
+        private SearchResult FindOne(string filter, string[] propertiesToLoad)
+        {
+            DirectorySearcher searcher = null;
+            try
+            {
+                searcher = CreateSearcher(filter, propertiesToLoad);
+                return searcher.FindOne();
             }
             finally
             {
